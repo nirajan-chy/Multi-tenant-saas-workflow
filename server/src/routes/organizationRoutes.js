@@ -15,6 +15,12 @@ router.use(authenticate);
 router.get("/", organizationController.listMyOrganizations);
 router.post("/", organizationController.createOrganization);
 
+router.get(
+  "/:organizationId/members",
+  requireOrganizationMember,
+  organizationController.listOrganizationMembers,
+);
+
 router.post(
   "/:organizationId/members",
   requireOrganizationMember,

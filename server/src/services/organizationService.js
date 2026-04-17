@@ -61,6 +61,29 @@ const listOrganizationsForUser = async userId => {
   }));
 };
 
+const listOrganizationMembers = async organizationId => {
+  const memberships = await Membership.findAll({
+    where: { organization_id: organizationId },
+    attributes: ["id", "role", "created_at"],
+    include: [
+      {
+        model: User,
+        as: "user",
+        attributes: ["id", "name", "email", "created_at"],
+        required: true,
+      },
+    ],
+    order: [["created_at", "ASC"]],
+  });
+
+  return memberships.map(membership => ({
+    id: membership.id,
+    role: membership.role,
+    created_at: membership.created_at,
+    user: membership.user,
+  }));
+};
+
 const addUserToOrganization = async ({ organizationId, userId, role }) => {
   const userExists = await User.findByPk(userId, { attributes: ["id"] });
   if (!userExists) {
@@ -100,5 +123,6 @@ module.exports = {
   createOrganization,
   getMembership,
   listOrganizationsForUser,
+  listOrganizationMembers,
   addUserToOrganization,
 };

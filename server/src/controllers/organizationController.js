@@ -12,7 +12,12 @@ const createOrganization = async (req, res, next) => {
       ownerUserId: req.user.id,
     });
 
-    res.status(201).json({ organization });
+    res.status(201).json({
+      organization,
+      membership: {
+        role: "admin",
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -64,8 +69,28 @@ const addOrganizationMember = async (req, res, next) => {
   }
 };
 
+const listOrganizationMembers = async (req, res, next) => {
+  try {
+    const organizationId = Number(req.params.organizationId);
+
+    if (!Number.isInteger(organizationId)) {
+      throw Object.assign(new Error("Invalid organization id"), {
+        statusCode: 400,
+      });
+    }
+
+    const members =
+      await organizationService.listOrganizationMembers(organizationId);
+
+    res.status(200).json({ members });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createOrganization,
   listMyOrganizations,
   addOrganizationMember,
+  listOrganizationMembers,
 };
