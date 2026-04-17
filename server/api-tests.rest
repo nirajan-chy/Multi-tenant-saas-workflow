@@ -1,0 +1,135 @@
+@baseUrl = http://localhost:5000
+@orgId = 1
+@taskId = 1
+@userBId = 2
+
+### 0) Health Check
+GET {{baseUrl}}/health
+
+### 0.1) Database Health Check
+GET {{baseUrl}}/health/db
+
+### 1) Register User A
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "User A",
+  "email": "usera@example.com",
+  "password": "Password123!"
+}
+
+### 2) Register User B
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "User B",
+  "email": "userb@example.com",
+  "password": "Password123!"
+}
+
+### 3) Login User A (stores tokens)
+# @name loginUserA
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "usera@example.com",
+  "password": "Password123!"
+}
+
+> {%
+  client.global.set("accessToken", response.body.accessToken);
+  client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### 4) Get Current User (protected)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{accessToken}}
+
+### 5) Create Organization (User A becomes admin)
+# @name createOrg
+POST {{baseUrl}}/api/organizations
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Acme Org"
+}
+
+> {%
+  client.global.set("organizationId", response.body.organization.id);
+%}
+
+### 6) List My Organizations
+GET {{baseUrl}}/api/organizations
+Authorization: Bearer {{accessToken}}
+
+### 7) Add User B to Organization as user
+# NOTE: update @userBId if your second user id is different.
+POST {{baseUrl}}/api/organizations/{{organizationId}}/members
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "userId": {{userBId}},
+  "role": "user"
+}
+
+### 8) Create Task in Organization
+# @name createTask
+POST {{baseUrl}}/api/organizations/{{organizationId}}/tasks
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "First Task",
+  "description": "Create initial task",
+  "status": "todo",
+  "assignedTo": {{userBId}}
+}
+
+> {%
+  client.global.set("taskId", response.body.task.id);
+%}
+
+### 9) List Organization Tasks
+GET {{baseUrl}}/api/organizations/{{organizationId}}/tasks
+Authorization: Bearer {{accessToken}}
+
+### 10) Update Task
+PUT {{baseUrl}}/api/organizations/{{organizationId}}/tasks/{{taskId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "in-progress",
+  "description": "Started working"
+}
+
+### 11) Delete Task (admin only)
+DELETE {{baseUrl}}/api/organizations/{{organizationId}}/tasks/{{taskId}}
+Authorization: Bearer {{accessToken}}
+
+### 12) Refresh Access Token (stores new tokens)
+# @name refreshTokenRequest
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+> {%
+  client.global.set("accessToken", response.body.accessToken);
+  client.global.set("refreshToken", response.body.refreshToken);
+%}
+
+### 13) Logout
+POST {{baseUrl}}/api/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}

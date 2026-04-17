@@ -21,7 +21,9 @@ const start = async () => {
     });
   } catch (error) {
     console.error("Failed to start server");
-    console.error(`Database target: ${config.db.host}:${config.db.port}/${config.db.database}`);
+    console.error(
+      `Database target: ${config.db.host}:${config.db.port}/${config.db.database}`,
+    );
     console.error("Reason:", error.message);
     process.exit(1);
   }

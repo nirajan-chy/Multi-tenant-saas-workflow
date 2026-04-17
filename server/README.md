@@ -64,3 +64,13 @@ Use `.env` (already added in your workspace) with keys:
 5. Create tasks in that organization.
 6. Verify user from another org cannot access tasks outside their membership.
 7. Test refresh token endpoint and logout.
+
+## 5. API Collections For Testing
+
+- VS Code REST Client file: `api-tests.rest`
+  - Open the file and click `Send Request` on each section.
+  - It automatically stores `accessToken`, `refreshToken`, `organizationId`, and `taskId` as you run.
+
+- Postman import file: `postman_collection.json`
+  - Import this file into Postman.
+  - Update variables (`userBId`, `organizationId`, `taskId`) based on your database values.
