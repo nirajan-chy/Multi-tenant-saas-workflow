@@ -38,7 +38,7 @@ Content-Type: application/json
   "email": "usera@example.com",
   "password": "Password123!"
 }
-
+###
 > {%
   client.global.set("accessToken", response.body.accessToken);
   client.global.set("refreshToken", response.body.refreshToken);
@@ -46,12 +46,12 @@ Content-Type: application/json
 
 ### 4) Get Current User (protected)
 GET {{baseUrl}}/api/auth/me
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoidXNlcmFAZXhhbXBsZS5jb20iLCJuYW1lIjoiVXNlciBBIiwiaWF0IjoxNzc2NDA5NzYxLCJleHAiOjE3NzY0MTA2NjF9.bjWmspeV4GheSiEHlo2z4DbBdiRq3YV6gkBjloJHD9o
 
 ### 5) Create Organization (User A becomes admin)
 # @name createOrg
 POST {{baseUrl}}/api/organizations
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoidXNlcmFAZXhhbXBsZS5jb20iLCJuYW1lIjoiVXNlciBBIiwiaWF0IjoxNzc2NDA5NzYxLCJleHAiOjE3NzY0MTA2NjF9.bjWmspeV4GheSiEHlo2z4DbBdiRq3YV6gkBjloJHD9o
 Content-Type: application/json
 
 {

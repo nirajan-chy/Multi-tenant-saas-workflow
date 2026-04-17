@@ -9,6 +9,10 @@ Express + PostgreSQL backend that includes:
 - Role-based access (`admin`, `user`)
 - Organization-scoped task CRUD
 
+## Architecture
+
+Read the full system design in [ARCHITECTURE.md](ARCHITECTURE.md).
+
 ## 1. Setup
 
 ```bash
