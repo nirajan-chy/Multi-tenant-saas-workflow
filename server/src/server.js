@@ -4,6 +4,7 @@ const app = require("./app");
 const config = require("./config/env");
 const db = require("./config/db");
 const { createSchema } = require("./models/schema");
+const { connectRedis } = require("./config/redis");
 
 const start = async () => {
   try {
@@ -19,6 +20,7 @@ const start = async () => {
     app.listen(config.port, () => {
       console.log(`Server listening on port ${config.port}`);
     });
+    await connectRedis();
   } catch (error) {
     console.error("Failed to start server");
     console.error(
