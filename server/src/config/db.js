@@ -1,14 +1,24 @@
-const { Pool } = require("pg");
+const { Sequelize } = require("sequelize");
 const config = require("./env");
 
-const pool = new Pool(config.db);
+const sequelize = new Sequelize(
+  config.db.database,
+  config.db.user,
+  config.db.password,
+  {
+    host: config.db.host,
+    port: config.db.port,
+    dialect: "postgres",
+    logging: false,
+    dialectOptions: config.db.ssl ? { ssl: config.db.ssl } : {},
+  },
+);
 
-pool.on("error", error => {
-  console.error("Unexpected PostgreSQL pool error", error);
+sequelize.authenticate().catch(error => {
+  console.error("Unexpected PostgreSQL Sequelize error", error);
 });
 
 module.exports = {
-  query: (text, params) => pool.query(text, params),
-  getClient: () => pool.connect(),
-  pool,
+  sequelize,
+  query: (text, params) => sequelize.query(text, { bind: params }),
 };

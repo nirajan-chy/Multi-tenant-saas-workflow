@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const { Task } = require("../models");
 const { getMembership } = require("./organizationService");
 
 const validStatuses = new Set(["todo", "in-progress", "done"]);
@@ -36,33 +36,32 @@ const createTask = async ({
 
   await assertAssigneeInOrganization({ organizationId, assignedTo });
 
-  const result = await db.query(
-    `INSERT INTO tasks (organization_id, title, description, status, assigned_to, created_by)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING id, organization_id, title, description, status, assigned_to, created_by, created_at, updated_at`,
-    [
-      organizationId,
-      title,
-      description || null,
-      status || "todo",
-      assignedTo || null,
-      createdBy,
-    ],
-  );
-
-  return result.rows[0];
+  return Task.create({
+    organization_id: organizationId,
+    title,
+    description: description || null,
+    status: status || "todo",
+    assigned_to: assignedTo || null,
+    created_by: createdBy,
+  });
 };
 
 const listTasksByOrganization = async organizationId => {
-  const result = await db.query(
-    `SELECT id, organization_id, title, description, status, assigned_to, created_by, created_at, updated_at
-     FROM tasks
-     WHERE organization_id = $1
-     ORDER BY created_at DESC`,
-    [organizationId],
-  );
-
-  return result.rows;
+  return Task.findAll({
+    where: { organization_id: organizationId },
+    attributes: [
+      "id",
+      "organization_id",
+      "title",
+      "description",
+      "status",
+      "assigned_to",
+      "created_by",
+      "created_at",
+      "updated_at",
+    ],
+    order: [["created_at", "DESC"]],
+  });
 };
 
 const updateTask = async ({
@@ -73,14 +72,14 @@ const updateTask = async ({
   status,
   assignedTo,
 }) => {
-  const existing = await db.query(
-    `SELECT id, organization_id, title, description, status, assigned_to, created_by, created_at, updated_at
-     FROM tasks
-     WHERE id = $1 AND organization_id = $2`,
-    [taskId, organizationId],
-  );
+  const existing = await Task.findOne({
+    where: {
+      id: taskId,
+      organization_id: organizationId,
+    },
+  });
 
-  if (!existing.rowCount) {
+  if (!existing) {
     throw Object.assign(new Error("Task not found"), { statusCode: 404 });
   }
 
@@ -89,46 +88,31 @@ const updateTask = async ({
   }
 
   const nextAssignedTo =
-    assignedTo === undefined ? existing.rows[0].assigned_to : assignedTo;
+    assignedTo === undefined ? existing.assigned_to : assignedTo;
   await assertAssigneeInOrganization({
     organizationId,
     assignedTo: nextAssignedTo,
   });
 
-  const nextTitle = title === undefined ? existing.rows[0].title : title;
-  const nextDescription =
-    description === undefined ? existing.rows[0].description : description;
-  const nextStatus = status === undefined ? existing.rows[0].status : status;
+  existing.title = title === undefined ? existing.title : title;
+  existing.description =
+    description === undefined ? existing.description : description;
+  existing.status = status === undefined ? existing.status : status;
+  existing.assigned_to = nextAssignedTo;
 
-  const result = await db.query(
-    `UPDATE tasks
-     SET title = $1,
-         description = $2,
-         status = $3,
-         assigned_to = $4,
-         updated_at = NOW()
-     WHERE id = $5 AND organization_id = $6
-     RETURNING id, organization_id, title, description, status, assigned_to, created_by, created_at, updated_at`,
-    [
-      nextTitle,
-      nextDescription,
-      nextStatus,
-      nextAssignedTo,
-      taskId,
-      organizationId,
-    ],
-  );
-
-  return result.rows[0];
+  await existing.save();
+  return existing;
 };
 
 const deleteTask = async ({ organizationId, taskId }) => {
-  const result = await db.query(
-    "DELETE FROM tasks WHERE id = $1 AND organization_id = $2 RETURNING id",
-    [taskId, organizationId],
-  );
+  const deleted = await Task.destroy({
+    where: {
+      id: taskId,
+      organization_id: organizationId,
+    },
+  });
 
-  if (!result.rowCount) {
+  if (!deleted) {
     throw Object.assign(new Error("Task not found"), { statusCode: 404 });
   }
 };

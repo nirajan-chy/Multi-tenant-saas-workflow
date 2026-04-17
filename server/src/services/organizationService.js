@@ -1,88 +1,99 @@
-const db = require("../config/db");
+const { sequelize } = require("../config/db");
+const { User, Organization, Membership } = require("../models");
 
 const createOrganization = async ({ name, ownerUserId }) => {
-  const client = await db.getClient();
-
-  try {
-    await client.query("BEGIN");
-
-    const orgResult = await client.query(
-      `INSERT INTO organizations (name, created_by)
-       VALUES ($1, $2)
-       RETURNING id, name, created_by, created_at`,
-      [name, ownerUserId],
+  return sequelize.transaction(async transaction => {
+    const org = await Organization.create(
+      {
+        name,
+        created_by: ownerUserId,
+      },
+      { transaction },
     );
 
-    const org = orgResult.rows[0];
-
-    await client.query(
-      `INSERT INTO memberships (user_id, organization_id, role)
-       VALUES ($1, $2, 'admin')`,
-      [ownerUserId, org.id],
+    await Membership.create(
+      {
+        user_id: ownerUserId,
+        organization_id: org.id,
+        role: "admin",
+      },
+      { transaction },
     );
 
-    await client.query("COMMIT");
     return org;
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
+  });
 };
 
 const getMembership = async ({ organizationId, userId }) => {
-  const result = await db.query(
-    `SELECT id, user_id, organization_id, role
-     FROM memberships
-     WHERE organization_id = $1 AND user_id = $2`,
-    [organizationId, userId],
-  );
+  const membership = await Membership.findOne({
+    where: {
+      organization_id: organizationId,
+      user_id: userId,
+    },
+    attributes: ["id", "user_id", "organization_id", "role"],
+  });
 
-  return result.rows[0] || null;
+  return membership;
 };
 
 const listOrganizationsForUser = async userId => {
-  const result = await db.query(
-    `SELECT o.id, o.name, m.role, o.created_at
-     FROM memberships m
-     JOIN organizations o ON o.id = m.organization_id
-     WHERE m.user_id = $1
-     ORDER BY o.created_at DESC`,
-    [userId],
-  );
+  const memberships = await Membership.findAll({
+    where: { user_id: userId },
+    attributes: ["role"],
+    include: [
+      {
+        model: Organization,
+        as: "organization",
+        attributes: ["id", "name", "created_at"],
+        required: true,
+      },
+    ],
+    order: [
+      [{ model: Organization, as: "organization" }, "created_at", "DESC"],
+    ],
+  });
 
-  return result.rows;
+  return memberships.map(membership => ({
+    id: membership.organization.id,
+    name: membership.organization.name,
+    role: membership.role,
+    created_at: membership.organization.created_at,
+  }));
 };
 
 const addUserToOrganization = async ({ organizationId, userId, role }) => {
-  const userExists = await db.query("SELECT id FROM users WHERE id = $1", [
-    userId,
-  ]);
-  if (!userExists.rowCount) {
+  const userExists = await User.findByPk(userId, { attributes: ["id"] });
+  if (!userExists) {
     throw Object.assign(new Error("User not found"), { statusCode: 404 });
   }
 
-  const orgExists = await db.query(
-    "SELECT id FROM organizations WHERE id = $1",
-    [organizationId],
-  );
-  if (!orgExists.rowCount) {
+  const orgExists = await Organization.findByPk(organizationId, {
+    attributes: ["id"],
+  });
+  if (!orgExists) {
     throw Object.assign(new Error("Organization not found"), {
       statusCode: 404,
     });
   }
 
-  const result = await db.query(
-    `INSERT INTO memberships (user_id, organization_id, role)
-     VALUES ($1, $2, $3)
-     ON CONFLICT (user_id, organization_id)
-     DO UPDATE SET role = EXCLUDED.role
-     RETURNING id, user_id, organization_id, role, created_at`,
-    [userId, organizationId, role],
-  );
+  const existing = await Membership.findOne({
+    where: {
+      user_id: userId,
+      organization_id: organizationId,
+    },
+  });
 
-  return result.rows[0];
+  if (existing) {
+    existing.role = role;
+    await existing.save();
+    return existing;
+  }
+
+  return Membership.create({
+    user_id: userId,
+    organization_id: organizationId,
+    role,
+  });
 };
 
 module.exports = {

@@ -1,9 +1,9 @@
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 
-const db = require("../config/db");
 const config = require("../config/env");
 const { signAccessToken } = require("../utils/jwt");
+const { User, RefreshToken } = require("../models");
 
 const hashRefreshToken = token =>
   crypto.createHash("sha256").update(token).digest("hex");
@@ -15,11 +15,11 @@ const createRefreshTokenPair = async userId => {
     Date.now() + config.auth.refreshTokenExpiresDays * 24 * 60 * 60 * 1000,
   );
 
-  await db.query(
-    `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
-     VALUES ($1, $2, $3)`,
-    [userId, tokenHash, expiresAt],
-  );
+  await RefreshToken.create({
+    user_id: userId,
+    token_hash: tokenHash,
+    expires_at: expiresAt,
+  });
 
   return refreshToken;
 };
@@ -32,40 +32,39 @@ const buildAccessToken = user =>
   });
 
 const register = async ({ name, email, password }) => {
-  const existing = await db.query("SELECT id FROM users WHERE email = $1", [
-    email,
-  ]);
-  if (existing.rowCount) {
+  const existing = await User.findOne({ where: { email }, attributes: ["id"] });
+  if (existing) {
     throw Object.assign(new Error("Email already in use"), { statusCode: 409 });
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
 
-  const result = await db.query(
-    `INSERT INTO users (name, email, password_hash)
-     VALUES ($1, $2, $3)
-     RETURNING id, name, email, created_at`,
-    [name, email, passwordHash],
-  );
+  const user = await User.create({
+    name,
+    email,
+    password_hash: passwordHash,
+  });
 
-  return result.rows[0];
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    created_at: user.created_at,
+  };
 };
 
 const login = async ({ email, password }) => {
-  const result = await db.query(
-    `SELECT id, name, email, password_hash
-     FROM users
-     WHERE email = $1`,
-    [email],
-  );
+  const user = await User.findOne({
+    where: { email },
+    attributes: ["id", "name", "email", "password_hash"],
+  });
 
-  if (!result.rowCount) {
+  if (!user) {
     throw Object.assign(new Error("Invalid email or password"), {
       statusCode: 401,
     });
   }
 
-  const user = result.rows[0];
   const isValid = await bcrypt.compare(password, user.password_hash);
 
   if (!isValid) {
@@ -91,20 +90,17 @@ const login = async ({ email, password }) => {
 const refreshAccessToken = async refreshToken => {
   const tokenHash = hashRefreshToken(refreshToken);
 
-  const tokenResult = await db.query(
-    `SELECT id, user_id, expires_at, revoked
-     FROM refresh_tokens
-     WHERE token_hash = $1`,
-    [tokenHash],
-  );
+  const tokenRow = await RefreshToken.findOne({
+    where: { token_hash: tokenHash },
+    attributes: ["id", "user_id", "expires_at", "revoked"],
+  });
 
-  if (!tokenResult.rowCount) {
+  if (!tokenRow) {
     throw Object.assign(new Error("Invalid refresh token"), {
       statusCode: 401,
     });
   }
 
-  const tokenRow = tokenResult.rows[0];
   const expired = new Date(tokenRow.expires_at).getTime() < Date.now();
 
   if (tokenRow.revoked || expired) {
@@ -113,19 +109,15 @@ const refreshAccessToken = async refreshToken => {
     });
   }
 
-  await db.query("UPDATE refresh_tokens SET revoked = TRUE WHERE id = $1", [
-    tokenRow.id,
-  ]);
+  await RefreshToken.update({ revoked: true }, { where: { id: tokenRow.id } });
 
-  const userResult = await db.query(
-    "SELECT id, name, email FROM users WHERE id = $1",
-    [tokenRow.user_id],
-  );
-  if (!userResult.rowCount) {
+  const user = await User.findByPk(tokenRow.user_id, {
+    attributes: ["id", "name", "email"],
+  });
+  if (!user) {
     throw Object.assign(new Error("User not found"), { statusCode: 404 });
   }
 
-  const user = userResult.rows[0];
   const accessToken = buildAccessToken(user);
   const newRefreshToken = await createRefreshTokenPair(user.id);
 
@@ -138,23 +130,22 @@ const refreshAccessToken = async refreshToken => {
 const logout = async refreshToken => {
   const tokenHash = hashRefreshToken(refreshToken);
 
-  await db.query(
-    "UPDATE refresh_tokens SET revoked = TRUE WHERE token_hash = $1",
-    [tokenHash],
+  await RefreshToken.update(
+    { revoked: true },
+    { where: { token_hash: tokenHash } },
   );
 };
 
 const getUserById = async userId => {
-  const result = await db.query(
-    "SELECT id, name, email, created_at FROM users WHERE id = $1",
-    [userId],
-  );
+  const user = await User.findByPk(userId, {
+    attributes: ["id", "name", "email", "created_at"],
+  });
 
-  if (!result.rowCount) {
+  if (!user) {
     throw Object.assign(new Error("User not found"), { statusCode: 404 });
   }
 
-  return result.rows[0];
+  return user;
 };
 
 module.exports = {
