@@ -60,9 +60,11 @@ const createTask = async ({
 
 const listTasksByOrganization = async organizationId => {
   const key = getCacheKey(organizationId);
+  // console.log("Yo key ho hai ", key);
 
   // Check cache
   const cached = await redisClient.get(key);
+  console.log("cache : ", cached);
   if (cached) {
     console.log(`[Redis] Cache hit: ${key}`);
     return JSON.parse(cached);

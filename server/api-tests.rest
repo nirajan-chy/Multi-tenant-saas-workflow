@@ -75,20 +75,20 @@ Content-Type: application/json
 }
 
 ### Create Task in Organization
-POST {{baseUrl}}/api/organizations/{{organizationId}}/tasks
-Authorization: Bearer <PASTE_ACCESS_TOKEN_HERE>
+POST {{baseUrl}}/api/organizations/1/tasks
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoidXNlcmFAZXhhbXBsZS5jb20iLCJuYW1lIjoiVXNlciBBIiwiaWF0IjoxNzc2NDgzMDE5LCJleHAiOjE3NzY0ODM5MTl9.CNID4Qfa0vDx800KMRc-w4kd_siGy028QGHJb1VWmOY
 Content-Type: application/json
 
 {
-  "title": "First Task",
-  "description": "Create initial task",
+  "title": "third Task",
+  "description": "Create third task",
   "status": "todo",
-  "assignedTo": {{userBId}}
+  "assignedTo": null
 }
 
 ### List Organization Tasks
-GET {{baseUrl}}/api/organizations/{{organizationId}}/tasks
-Authorization: Bearer <PASTE_ACCESS_TOKEN_HERE>
+GET {{baseUrl}}/api/organizations/1/tasks
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoidXNlcmFAZXhhbXBsZS5jb20iLCJuYW1lIjoiVXNlciBBIiwiaWF0IjoxNzc2NDgzMDE5LCJleHAiOjE3NzY0ODM5MTl9.CNID4Qfa0vDx800KMRc-w4kd_siGy028QGHJb1VWmOY
 
 ### Update Task
 PUT {{baseUrl}}/api/organizations/{{organizationId}}/tasks/{{taskId}}
