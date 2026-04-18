@@ -1,3 +1,4 @@
+const { getChannel } = require("../config/rabbitMq");
 const { redisClient } = require("../config/redis");
 const { Task } = require("../models");
 const { getMembership } = require("./organizationService");
@@ -43,18 +44,44 @@ const createTask = async ({
   createdBy,
 }) => {
   validateStatus(status);
-  await assertAssigneeInOrganization({ organizationId, assignedTo });
+
+  await assertAssigneeInOrganization({
+    organizationId,
+    assignedTo,
+  });
 
   const task = await Task.create({
     organization_id: organizationId,
     title,
-    description: description || null,
-    status: status || "todo",
-    assigned_to: assignedTo || null,
+    description: description ?? null,
+    status: status ?? "todo",
+    assigned_to: assignedTo ?? null,
     created_by: createdBy,
   });
 
+  // 🔹 send event 
+  try {
+    const channel = getChannel();
+
+    if (channel) {
+      channel.sendToQueue(
+        "task_queue",
+        Buffer.from(
+          JSON.stringify({
+            type: "TASK_CREATED",
+            taskId: task.id,
+            organizationId,
+          }),
+        ),
+      );
+    }
+  } catch (err) {
+    console.error("Queue send failed:", err.message);
+  }
+
+  //  invalidate cache
   await invalidateTaskCache(organizationId);
+
   return task.toJSON();
 };
 

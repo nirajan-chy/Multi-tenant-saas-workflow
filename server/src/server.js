@@ -5,6 +5,7 @@ const config = require("./config/env");
 const db = require("./config/db");
 const { createSchema } = require("./models/schema");
 const { connectRedis } = require("./config/redis");
+const { connectQueue } = require("./config/rabbitMq");
 
 const start = async () => {
   try {
@@ -21,6 +22,7 @@ const start = async () => {
       console.log(`Server listening on port ${config.port}`);
     });
     await connectRedis();
+    await connectQueue();
   } catch (error) {
     console.error("Failed to start server");
     console.error(

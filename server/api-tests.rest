@@ -76,12 +76,12 @@ Content-Type: application/json
 
 ### Create Task in Organization
 POST {{baseUrl}}/api/organizations/1/tasks
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoidXNlcmFAZXhhbXBsZS5jb20iLCJuYW1lIjoiVXNlciBBIiwiaWF0IjoxNzc2NDgzMDE5LCJleHAiOjE3NzY0ODM5MTl9.CNID4Qfa0vDx800KMRc-w4kd_siGy028QGHJb1VWmOY
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoidXNlcmFAZXhhbXBsZS5jb20iLCJuYW1lIjoiVXNlciBBIiwiaWF0IjoxNzc2NDg1NTcxLCJleHAiOjE3NzY0ODY0NzF9.wBYO19DzhX83FWU1w-ZeJ-HO7M_7ERhNsBD2Nr2GAlQ
 Content-Type: application/json
 
 {
-  "title": "third Task",
-  "description": "Create third task",
+  "title": "fourth Task",
+  "description": "Create fourth task",
   "status": "todo",
   "assignedTo": null
 }
