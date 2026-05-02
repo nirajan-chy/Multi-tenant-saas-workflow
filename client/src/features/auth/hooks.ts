@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiClient } from "../../lib/api-client";
 import { useAuthStore } from "../../store/auth-store";
 import {
   forgotPassword,
@@ -21,8 +22,12 @@ export const useAuth = () => {
     setError(null);
     try {
       const data = await loginApi({ email, password });
-      setAuth(data.user, data.token);
+      setAuth(data.user, data.token, data.refreshToken ?? null);
       window.localStorage.setItem("token", data.token);
+      if (data.refreshToken) {
+        window.localStorage.setItem("refreshToken", data.refreshToken);
+      }
+      window.localStorage.setItem("user", JSON.stringify(data.user));
       router.push("/dashboard");
     } catch (err: any) {
       setError(err?.message ?? "Login failed");
@@ -37,8 +42,12 @@ export const useAuth = () => {
     setError(null);
     try {
       const data = await registerApi(payload);
-      setAuth(data.user, data.token);
+      setAuth(data.user, data.token, data.refreshToken ?? null);
       window.localStorage.setItem("token", data.token);
+      if (data.refreshToken) {
+        window.localStorage.setItem("refreshToken", data.refreshToken);
+      }
+      window.localStorage.setItem("user", JSON.stringify(data.user));
       router.push("/dashboard");
     } catch (err: any) {
       setError(err?.message ?? "Registration failed");
@@ -62,8 +71,16 @@ export const useAuth = () => {
   };
 
   const logout = () => {
+    const refreshToken = window.localStorage.getItem("refreshToken");
+    if (refreshToken) {
+      void apiClient
+        .post("/auth/logout", { refreshToken })
+        .catch(() => undefined);
+    }
     clearAuth();
     window.localStorage.removeItem("token");
+    window.localStorage.removeItem("refreshToken");
+    window.localStorage.removeItem("user");
     router.push("/login");
   };
 

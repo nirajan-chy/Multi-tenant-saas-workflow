@@ -1,23 +1,37 @@
-import axios from 'axios';
-import { Task } from '../../types/task';
+import { apiClient } from "../../lib/api-client";
+import { Task } from "../../types/task";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/tasks';
+const buildTaskUrl = (organizationId: number) =>
+  `/organizations/${organizationId}/tasks`;
 
-export const fetchTasks = async (): Promise<Task[]> => {
-    const response = await axios.get(API_URL);
-    return response.data;
+export const fetchTasks = async (organizationId: number): Promise<Task[]> => {
+  const response = await apiClient.get(buildTaskUrl(organizationId));
+  return response.data.tasks ?? response.data;
 };
 
-export const createTask = async (task: Omit<Task, 'id'>): Promise<Task> => {
-    const response = await axios.post(API_URL, task);
-    return response.data;
+export const createTask = async (
+  organizationId: number,
+  task: Omit<Task, "id" | "createdAt" | "updatedAt" | "organizationId">,
+): Promise<Task> => {
+  const response = await apiClient.post(buildTaskUrl(organizationId), task);
+  return response.data.task ?? response.data;
 };
 
-export const updateTask = async (taskId: string, task: Partial<Task>): Promise<Task> => {
-    const response = await axios.put(`${API_URL}/${taskId}`, task);
-    return response.data;
+export const updateTask = async (
+  organizationId: number,
+  taskId: number,
+  task: Partial<Task>,
+): Promise<Task> => {
+  const response = await apiClient.put(
+    `${buildTaskUrl(organizationId)}/${taskId}`,
+    task,
+  );
+  return response.data.task ?? response.data;
 };
 
-export const deleteTask = async (taskId: string): Promise<void> => {
-    await axios.delete(`${API_URL}/${taskId}`);
+export const deleteTask = async (
+  organizationId: number,
+  taskId: number,
+): Promise<void> => {
+  await apiClient.delete(`${buildTaskUrl(organizationId)}/${taskId}`);
 };

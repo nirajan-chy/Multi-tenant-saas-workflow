@@ -1,21 +1,29 @@
-import { apiClient } from '../../lib/api-client';
-import { Project } from '../../types/project';
+import { apiClient } from "../../lib/api-client";
+import { Project } from "./types";
 
 export const fetchProjects = async (): Promise<Project[]> => {
-    const response = await apiClient.get('/projects');
-    return response.data;
+  const response = await apiClient.get("/organizations");
+  return response.data.organizations ?? response.data;
 };
 
-export const createProject = async (projectData: Omit<Project, 'id'>): Promise<Project> => {
-    const response = await apiClient.post('/projects', projectData);
-    return response.data;
+export const createProject = async (
+  projectData: Omit<Project, "id">,
+): Promise<Project> => {
+  const response = await apiClient.post("/organizations", projectData);
+  return response.data.organization ?? response.data;
 };
 
-export const updateProject = async (projectId: string, projectData: Partial<Project>): Promise<Project> => {
-    const response = await apiClient.put(`/projects/${projectId}`, projectData);
-    return response.data;
+export const updateProject = async (
+  projectId: number,
+  projectData: Partial<Project>,
+): Promise<Project> => {
+  const response = await apiClient.put(
+    `/organizations/${projectId}`,
+    projectData,
+  );
+  return response.data.organization ?? response.data;
 };
 
-export const deleteProject = async (projectId: string): Promise<void> => {
-    await apiClient.delete(`/projects/${projectId}`);
+export const deleteProject = async (projectId: number): Promise<void> => {
+  await apiClient.delete(`/organizations/${projectId}`);
 };

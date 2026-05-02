@@ -22,6 +22,29 @@ export interface Project {
   updatedAt: string;
 }
 
+export interface Organization {
+  id: number;
+  name: string;
+  role?: "admin" | "user";
+  created_at?: string;
+}
+
+export interface OrganizationMember {
+  id: number;
+  role: "admin" | "user";
+  created_at?: string;
+  user: User;
+}
+
+export interface CreateOrganizationInput {
+  name: string;
+}
+
+export interface AddOrganizationMemberInput {
+  userId: number;
+  role: "admin" | "user";
+}
+
 export interface User {
   id: string;
   email: string;
@@ -41,4 +64,6 @@ export interface Tenant {
 export interface AuthResponse {
   token: string;
   user: User;
+  refreshToken?: string;
+  accessToken?: string;
 }

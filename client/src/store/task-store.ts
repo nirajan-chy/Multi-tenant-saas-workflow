@@ -5,8 +5,8 @@ interface TaskState {
   tasks: Task[];
   setTasks: (tasks: Task[]) => void;
   addTask: (task: Task) => void;
-  updateTask: (taskId: string, partial: Partial<Task>) => void;
-  removeTask: (taskId: string) => void;
+  updateTask: (taskId: number, partial: Partial<Task>) => void;
+  removeTask: (taskId: number) => void;
 }
 
 export const useTaskStore = create<TaskState>(set => ({

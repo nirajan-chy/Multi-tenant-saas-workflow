@@ -1,21 +1,15 @@
 export interface Project {
-  id: string;
+  id: number;
   name: string;
   description?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  ownerId: string;
-  teamId?: string;
+  role?: "admin" | "user";
+  created_at?: string;
 }
 
 export interface ProjectCreateInput {
   name: string;
-  description?: string;
-  teamId?: string;
 }
 
 export interface ProjectUpdateInput {
   name?: string;
-  description?: string;
-  teamId?: string;
 }

@@ -1,12 +1,15 @@
 export interface Task {
-  id: string;
+  id: number;
+  organizationId?: number;
   title: string;
   description?: string;
-  status: 'pending' | 'in-progress' | 'completed';
-  priority: 'low' | 'medium' | 'high';
-  dueDate?: string; // ISO date string
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
+  status: "todo" | "in-progress" | "done";
+  assignedTo?: number | null;
+  createdBy?: number;
+  createdAt: string;
+  updatedAt: string;
+  priority?: "low" | "medium" | "high";
+  dueDate?: string;
 }
 
 export interface TaskResponse {
@@ -17,16 +20,14 @@ export interface TaskResponse {
 export interface CreateTaskInput {
   title: string;
   description?: string;
-  status?: 'pending' | 'in-progress' | 'completed';
-  priority?: 'low' | 'medium' | 'high';
-  dueDate?: string; // ISO date string
+  status?: "todo" | "in-progress" | "done";
+  assignedTo?: number | null;
 }
 
 export interface UpdateTaskInput {
-  id: string;
+  id: number;
   title?: string;
   description?: string;
-  status?: 'pending' | 'in-progress' | 'completed';
-  priority?: 'low' | 'medium' | 'high';
-  dueDate?: string; // ISO date string
+  status?: "todo" | "in-progress" | "done";
+  assignedTo?: number | null;
 }

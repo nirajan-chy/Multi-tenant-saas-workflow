@@ -14,6 +14,18 @@ router.use(authenticate);
 
 router.get("/", organizationController.listMyOrganizations);
 router.post("/", organizationController.createOrganization);
+router.put(
+  "/:organizationId",
+  requireOrganizationMember,
+  requireRole("admin"),
+  organizationController.updateOrganization,
+);
+router.delete(
+  "/:organizationId",
+  requireOrganizationMember,
+  requireRole("admin"),
+  organizationController.deleteOrganization,
+);
 
 router.get(
   "/:organizationId/members",

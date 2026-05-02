@@ -6,33 +6,37 @@ import { Input } from "../ui/input";
 import { Task } from "../../types/task";
 import { createTask } from "../../services/task-service";
 
-const TaskForm: React.FC<{ initialTask?: Task; onSuccess: () => void }> = ({
-  initialTask,
-  onSuccess,
-}) => {
+const TaskForm: React.FC<{
+  organizationId: number;
+  initialTask?: Task;
+  onSuccess: () => void;
+}> = ({ organizationId, initialTask, onSuccess }) => {
   const [title, setTitle] = useState(initialTask?.title || "");
   const [description, setDescription] = useState(
     initialTask?.description || "",
   );
-  const [dueDate, setDueDate] = useState(initialTask?.dueDate || "");
+  const [status, setStatus] = useState<Task["status"]>(
+    initialTask?.status || "todo",
+  );
+  const [assignedTo, setAssignedTo] = useState(
+    initialTask?.assignedTo?.toString() || "",
+  );
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await createTask({
+      await createTask(organizationId, {
         title,
         description,
-        dueDate,
-        status: "pending",
-        priority: "medium",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        status,
+        assignedTo: assignedTo ? Number(assignedTo) : null,
       });
       setTitle("");
       setDescription("");
-      setDueDate("");
+      setStatus("todo");
+      setAssignedTo("");
       onSuccess();
     } catch (error) {
       console.error("Error creating task:", error);
@@ -55,10 +59,20 @@ const TaskForm: React.FC<{ initialTask?: Task; onSuccess: () => void }> = ({
         placeholder="Task Description"
       />
       <Input
-        value={dueDate}
-        onChange={e => setDueDate(e.target.value)}
-        type="date"
+        value={assignedTo}
+        onChange={e => setAssignedTo(e.target.value)}
+        placeholder="Assigned To User ID"
+        type="number"
       />
+      <select
+        value={status}
+        onChange={e => setStatus(e.target.value as Task["status"])}
+        className="rounded-md border border-gray-300 p-2"
+      >
+        <option value="todo">Todo</option>
+        <option value="in-progress">In Progress</option>
+        <option value="done">Done</option>
+      </select>
       <Button type="submit" disabled={loading}>
         {loading ? "Creating..." : "Create Task"}
       </Button>

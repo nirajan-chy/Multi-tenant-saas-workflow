@@ -15,7 +15,7 @@ const register = async (req, res, next) => {
       password: String(password),
     });
 
-    res.status(201).json({ user });
+    res.status(201).json(user);
   } catch (error) {
     next(error);
   }

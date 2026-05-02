@@ -23,6 +23,51 @@ const createOrganization = async (req, res, next) => {
   }
 };
 
+const updateOrganization = async (req, res, next) => {
+  try {
+    const organizationId = Number(req.params.organizationId);
+    const { name } = req.body;
+
+    if (!Number.isInteger(organizationId)) {
+      throw Object.assign(new Error("Invalid organization id"), {
+        statusCode: 400,
+      });
+    }
+
+    if (!name) {
+      throw Object.assign(new Error("name is required"), {
+        statusCode: 400,
+      });
+    }
+
+    const organization = await organizationService.updateOrganization({
+      organizationId,
+      name: String(name).trim(),
+    });
+
+    res.status(200).json({ organization });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteOrganization = async (req, res, next) => {
+  try {
+    const organizationId = Number(req.params.organizationId);
+
+    if (!Number.isInteger(organizationId)) {
+      throw Object.assign(new Error("Invalid organization id"), {
+        statusCode: 400,
+      });
+    }
+
+    await organizationService.deleteOrganization({ organizationId });
+    res.status(200).json({ message: "Organization deleted" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const listMyOrganizations = async (req, res, next) => {
   try {
     const organizations = await organizationService.listOrganizationsForUser(
@@ -90,6 +135,8 @@ const listOrganizationMembers = async (req, res, next) => {
 
 module.exports = {
   createOrganization,
+  updateOrganization,
+  deleteOrganization,
   listMyOrganizations,
   addOrganizationMember,
   listOrganizationMembers,

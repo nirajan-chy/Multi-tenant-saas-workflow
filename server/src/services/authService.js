@@ -45,11 +45,22 @@ const register = async ({ name, email, password }) => {
     password_hash: passwordHash,
   });
 
+  const accessToken = buildAccessToken(user);
+  const refreshToken = await createRefreshTokenPair(user.id);
+
   return {
     id: user.id,
     name: user.name,
     email: user.email,
     created_at: user.created_at,
+    token: accessToken,
+    accessToken,
+    refreshToken,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+    },
   };
 };
 
@@ -77,6 +88,7 @@ const login = async ({ email, password }) => {
   const refreshToken = await createRefreshTokenPair(user.id);
 
   return {
+    token: accessToken,
     accessToken,
     refreshToken,
     user: {

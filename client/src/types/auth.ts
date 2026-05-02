@@ -1,14 +1,16 @@
 export interface User {
-  id: string;
+  id: number;
   email: string;
   name: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthResponse {
   user: User;
   token: string;
+  accessToken?: string;
+  refreshToken?: string;
 }
 
 export interface LoginCredentials {

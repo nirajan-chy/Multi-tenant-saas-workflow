@@ -2,8 +2,10 @@ import React from "react";
 import TaskCard from "./task-card";
 import { useTasks } from "../../features/tasks/hooks";
 
-const TaskList: React.FC = () => {
-  const { tasks, loading, error } = useTasks();
+const TaskList: React.FC<{ organizationId?: number }> = ({
+  organizationId,
+}) => {
+  const { tasks, loading, error } = useTasks(organizationId ?? null);
 
   if (loading) {
     return <div>Loading tasks...</div>;

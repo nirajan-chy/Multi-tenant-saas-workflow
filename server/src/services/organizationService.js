@@ -1,5 +1,5 @@
 const { sequelize } = require("../config/db");
-const { User, Organization, Membership } = require("../models");
+const { User, Organization, Membership, Task } = require("../models");
 
 const createOrganization = async ({ name, ownerUserId }) => {
   return sequelize.transaction(async transaction => {
@@ -21,6 +21,44 @@ const createOrganization = async ({ name, ownerUserId }) => {
     );
 
     return org;
+  });
+};
+
+const updateOrganization = async ({ organizationId, name }) => {
+  const organization = await Organization.findByPk(organizationId);
+
+  if (!organization) {
+    throw Object.assign(new Error("Organization not found"), {
+      statusCode: 404,
+    });
+  }
+
+  organization.name = name;
+  await organization.save();
+
+  return organization;
+};
+
+const deleteOrganization = async ({ organizationId }) => {
+  await sequelize.transaction(async transaction => {
+    await Task.destroy({
+      where: { organization_id: organizationId },
+      transaction,
+    });
+    await Membership.destroy({
+      where: { organization_id: organizationId },
+      transaction,
+    });
+    const deleted = await Organization.destroy({
+      where: { id: organizationId },
+      transaction,
+    });
+
+    if (!deleted) {
+      throw Object.assign(new Error("Organization not found"), {
+        statusCode: 404,
+      });
+    }
   });
 };
 
@@ -121,6 +159,8 @@ const addUserToOrganization = async ({ organizationId, userId, role }) => {
 
 module.exports = {
   createOrganization,
+  updateOrganization,
+  deleteOrganization,
   getMembership,
   listOrganizationsForUser,
   listOrganizationMembers,

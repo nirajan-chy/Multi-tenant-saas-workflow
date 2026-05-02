@@ -1,53 +1,76 @@
-import { useEffect, useState } from 'react';
-import { fetchTasks, createTask, updateTask, deleteTask } from './api';
-import { Task } from './types';
+import { useEffect, useState } from "react";
+import { fetchTasks, createTask, updateTask, deleteTask } from "./api";
+import { Task } from "./types";
 
-export const useTasks = () => {
+export const useTasks = (organizationId: number | null = null) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadTasks = async () => {
+      if (!organizationId) {
+        setTasks([]);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const fetchedTasks = await fetchTasks();
+        const fetchedTasks = await fetchTasks(organizationId);
         setTasks(fetchedTasks);
       } catch (err) {
-        setError('Failed to load tasks');
+        setError("Failed to load tasks");
       } finally {
         setLoading(false);
       }
     };
 
     loadTasks();
-  }, []);
+  }, [organizationId]);
 
-  const addTask = async (task: Task) => {
+  const addTask = async (
+    task: Omit<Task, "id" | "createdAt" | "updatedAt">,
+  ) => {
+    if (!organizationId) {
+      setError("Select an organization first");
+      return;
+    }
+
     try {
-      const newTask = await createTask(task);
-      setTasks((prevTasks) => [...prevTasks, newTask]);
+      const newTask = await createTask(organizationId, task);
+      setTasks(prevTasks => [...prevTasks, newTask]);
     } catch (err) {
-      setError('Failed to create task');
+      setError("Failed to create task");
     }
   };
 
-  const editTask = async (taskId: string, updatedTask: Task) => {
+  const editTask = async (taskId: number, updatedTask: Partial<Task>) => {
+    if (!organizationId) {
+      setError("Select an organization first");
+      return;
+    }
+
     try {
-      const updated = await updateTask(taskId, updatedTask);
-      setTasks((prevTasks) =>
-        prevTasks.map((task) => (task.id === taskId ? updated : task))
+      const updated = await updateTask(organizationId, taskId, updatedTask);
+      setTasks(prevTasks =>
+        prevTasks.map(task => (task.id === taskId ? updated : task)),
       );
     } catch (err) {
-      setError('Failed to update task');
+      setError("Failed to update task");
     }
   };
 
-  const removeTask = async (taskId: string) => {
+  const removeTask = async (taskId: number) => {
+    if (!organizationId) {
+      setError("Select an organization first");
+      return;
+    }
+
     try {
-      await deleteTask(taskId);
-      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+      await deleteTask(organizationId, taskId);
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
     } catch (err) {
-      setError('Failed to delete task');
+      setError("Failed to delete task");
     }
   };
 
